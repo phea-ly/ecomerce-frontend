@@ -24,7 +24,7 @@ const wishlist = ref<any[]>([])
 const orders = ref<any[]>([])
 const message = ref('')
 const error = ref('')
-const filters = reactive({ search: '', category_id: '', min_price: '', max_price: '' })
+const filters = reactive({ search: '', category_id: '' })
 const auth = reactive({ name: '', email: '', password: '', password_confirmation: '' })
 const checkout = reactive({ customer_name: '', phone: '', address: '' })
 const profile = reactive({ name: '', email: '', current_password: '', password: '', password_confirmation: '' })
@@ -66,12 +66,16 @@ async function loadPrivate() {
 
 async function login(register = false) {
   clear()
-  const { data } = await api.post(register ? '/register' : '/login', auth)
-  localStorage.setItem('token', data.token)
-  token.value = data.token
-  user.value = data.user
-  await loadPrivate()
-  show('/products')
+  try {
+    const { data } = await api.post(register ? '/register' : '/login', auth)
+    localStorage.setItem('token', data.token)
+    token.value = data.token
+    user.value = data.user
+    await loadPrivate()
+    show('/products')
+  } catch (e: any) {
+    error.value = e.response?.data?.message || 'Authentication failed. Please try again.'
+  }
 }
 
 async function logout() {
@@ -166,7 +170,7 @@ onMounted(async () => {
   <div class="shell">
     <header class="topbar">
       <nav class="nav">
-        <RouterLink class="brand" to="/">ShopStack</RouterLink>
+        <RouterLink class="brand" to="/">AVOCADOO</RouterLink>
         <RouterLink to="/products">Products</RouterLink>
         <RouterLink to="/wishlist">Wishlist</RouterLink>
         <RouterLink to="/cart">Cart ({{ cart.length }})</RouterLink>
@@ -196,8 +200,6 @@ onMounted(async () => {
         <div class="toolbar">
           <input v-model="filters.search" placeholder="Search products" @input="loadProducts">
           <select v-model="filters.category_id" @change="loadProducts"><option value="">All categories</option><option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option></select>
-          <input v-model="filters.min_price" type="number" placeholder="Min" @input="loadProducts">
-          <input v-model="filters.max_price" type="number" placeholder="Max" @input="loadProducts">
         </div>
         <div class="grid">
           <article v-for="p in products" :key="p.id" class="card">
