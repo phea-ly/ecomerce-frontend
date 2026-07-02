@@ -2,6 +2,7 @@
 import axios from 'axios'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import * as IconHeart from './components/icons/IconHeart.vue'
 
 const api = axios.create({ baseURL: 'http://127.0.0.1:8000/api' })
 api.interceptors.request.use((config) => {
@@ -38,6 +39,10 @@ function show(path: string) {
 
 function money(value: number | string) {
   return `$${Number(value).toFixed(2)}`
+}
+
+function isInWishlist(productId: number) {
+  return wishlist.value.some(item => item.product_id === productId)
 }
 
 async function loadPublic() {
@@ -207,7 +212,7 @@ onMounted(async () => {
             <h3>{{ p.name }}</h3>
             <p class="muted">{{ p.category?.name }}</p>
             <p class="price">{{ money(p.price) }}</p>
-            <div class="row"><button @click="show(`/product/${p.id}`)">View</button><button class="ghost" @click="addCart(p.id)">Cart</button><button class="ghost" @click="addWishlist(p.id)">Wishlist</button></div>
+            <div class="row"><button @click="show(`/product/${p.id}`)">View</button><button class="ghost" @click="addCart(p.id)">Cart</button><button class="ghost" @click="addWishlist(p.id)"><IconHeart :class="{ 'heart-active': isInWishlist(p.id) }" /> Wishlist</button></div>
           </article>
         </div>
       </section>
@@ -219,7 +224,7 @@ onMounted(async () => {
           <p class="muted">{{ product.category?.name }}</p>
           <p>{{ product.description }}</p>
           <p class="price">{{ money(product.price) }}</p>
-          <div class="row"><button @click="addCart(product.id)">Add to Cart</button><button class="ghost" @click="addWishlist(product.id)">Wishlist</button></div>
+          <div class="row"><button @click="addCart(product.id)">Add to Cart</button><button class="ghost" @click="addWishlist(product.id)"><IconHeart :class="{ 'heart-active': isInWishlist(product.id) }" /> Wishlist</button></div>
         </div>
         <aside class="panel">
           <h2>Reviews</h2>
@@ -246,11 +251,35 @@ onMounted(async () => {
 
       <section v-if="page === 'wishlist'">
         <h1>Wishlist</h1>
-        <div class="list"><div v-for="w in wishlist" :key="w.id" class="card row"><b>{{ w.product.name }}</b><span class="price">{{ money(w.product.price) }}</span><button class="danger" @click="removeWishlist(w.product_id)">Remove</button></div></div>
+        <div class="list"><div v-for="w in wishlist" :key="w.id" class="card row">
+          <img class="wishlist-img" :src="w.product.image_url || 'https://placehold.co/600x450?text=Product'" :alt="w.product.name">
+          <div class="wishlist-info">
+            <b>{{ w.product.name }}</b>
+            <span class="price">{{ money(w.product.price) }}</span>
+          </div>
+          <button class="danger" @click="removeWishlist(w.product_id)">Remove</button>
+        </div></div>
       </section>
 
       <section v-if="page === 'cart'" class="split">
-        <div><h1>Cart</h1><div class="list"><div v-for="item in cart" :key="item.id" class="card row"><b>{{ item.product.name }}</b><span>{{ money(item.product.price) }}</span><button class="ghost" @click="updateCart(item,item.quantity-1)">-</button><span>{{ item.quantity }}</span><button class="ghost" @click="updateCart(item,item.quantity+1)">+</button><button class="danger" @click="removeCart(item)">Remove</button></div></div></div>
+        <div>
+          <h1>Cart</h1>
+          <div class="list">
+            <div v-for="item in cart" :key="item.id" class="card cart-item">
+              <img class="cart-img" :src="item.product.image_url || 'https://placehold.co/600x450?text=Product'" :alt="item.product.name">
+              <div class="cart-info">
+                <b>{{ item.product.name }}</b>
+                <span class="price">{{ money(item.product.price) }}</span>
+                <div class="cart-controls">
+                  <button class="ghost" @click="updateCart(item,item.quantity-1)">-</button>
+                  <span class="quantity">{{ item.quantity }}</span>
+                  <button class="ghost" @click="updateCart(item,item.quantity+1)">+</button>
+                </div>
+              </div>
+              <button class="danger" @click="removeCart(item)">Remove</button>
+            </div>
+          </div>
+        </div>
         <aside class="panel"><h2>Total: {{ money(total) }}</h2><button @click="show('/checkout')">Checkout</button></aside>
       </section>
 
@@ -264,7 +293,26 @@ onMounted(async () => {
 
       <section v-if="page === 'orders'">
         <h1>Order History</h1>
-        <div class="list"><div v-for="o in orders" :key="o.id" class="card"><h3>#{{ o.id }} - {{ o.status }} - {{ money(o.total) }}</h3><p v-for="i in o.items" :key="i.id">{{ i.product_name }} x {{ i.quantity }} = {{ money(i.subtotal) }}</p></div></div>
+        <div class="orders-list">
+          <div v-for="o in orders" :key="o.id" class="order-card">
+            <div class="order-header">
+              <div class="order-title">
+                <h3>Order #{{ o.id }}</h3>
+                <span class="order-status" :class="'status-' + o.status.toLowerCase()">{{ o.status }}</span>
+              </div>
+              <div class="order-total">{{ money(o.total) }}</div>
+            </div>
+            <div class="order-items">
+              <div v-for="i in o.items" :key="i.id" class="order-item">
+                <div class="item-info">
+                  <span class="item-name">{{ i.product_name }}</span>
+                  <span class="item-quantity">x{{ i.quantity }}</span>
+                </div>
+                <span class="item-subtotal">{{ money(i.subtotal) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section v-if="page === 'profile'" class="split">
