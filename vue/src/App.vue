@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import * as IconHeart from './components/icons/IconHeart.vue'
+import IconHeart from './components/icons/IconHeart.vue'
 
 const api = axios.create({ baseURL: 'http://127.0.0.1:8000/api' })
 api.interceptors.request.use((config) => {
@@ -257,7 +257,9 @@ onMounted(async () => {
             <b>{{ w.product.name }}</b>
             <span class="price">{{ money(w.product.price) }}</span>
           </div>
-          <button class="danger" @click="removeWishlist(w.product_id)">Remove</button>
+          <button class="wishlist-btn" @click="removeWishlist(w.product_id)">
+            <IconHeart :class="{ 'heart-active': true }" />
+          </button>
         </div></div>
       </section>
 

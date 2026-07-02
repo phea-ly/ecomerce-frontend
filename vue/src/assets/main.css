@@ -246,6 +246,28 @@ label {
   color: #dc2626;
 }
 
+.wishlist-btn {
+  background: transparent;
+  border: 0;
+  padding: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: none;
+}
+
+.wishlist-btn:hover {
+  background: #fee2e2;
+  transform: scale(1.1);
+}
+
+.wishlist-btn:active {
+  transform: scale(0.95);
+}
+
 .cart-item {
   display: flex;
   align-items: center;
